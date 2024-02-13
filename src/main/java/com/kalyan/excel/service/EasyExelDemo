@@ -1,0 +1,77 @@
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.read.builder.ExcelReaderBuilder;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ExcelToDatabaseExample {
+    public static void main(String[] args) {
+        String excelFilePath = "path/to/your/excel.xlsx";
+        
+        // Define database connection parameters
+        String url = "jdbc:mysql://localhost:3306/your_database";
+        String username = "your_username";
+        String password = "your_password";
+
+        // Read Excel data and save to database
+        try {
+            // Create database connection
+            Connection connection = DriverManager.getConnection(url, username, password);
+
+            // Initialize EasyExcel reader
+            ExcelReaderBuilder excelReaderBuilder = EasyExcel.read(excelFilePath, new ExcelListener());
+
+            // Read Excel data and save to database
+            excelReaderBuilder.sheet().doRead();
+            
+            // Close database connection
+            connection.close();
+            
+            System.out.println("Excel data imported to database successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Custom listener to handle Excel data
+    static class ExcelListener extends AnalysisEventListener<User> {
+        private final List<User> userList = new ArrayList<>();
+
+        @Override
+        public void invoke(User user, AnalysisContext context) {
+            userList.add(user);
+        }
+
+        @Override
+        public void doAfterAllAnalysed(AnalysisContext context) {
+            // Save the parsed Excel data to the database
+            saveToDatabase(userList);
+        }
+
+        private void saveToDatabase(List<User> userList) {
+            // Database connection parameters
+            String url = "jdbc:mysql://localhost:3306/your_database";
+            String username = "your_username";
+            String password = "your_password";
+
+            String sql = "INSERT INTO users (name, age) VALUES (?, ?)";
+            try (Connection connection = DriverManager.getConnection(url, username, password);
+                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                for (User user : userList) {
+                    preparedStatement.setString(1, user.getName());
+                    preparedStatement.setInt(2, user.getAge());
+                    preparedStatement.addBatch();
+                }
+                preparedStatement.executeBatch();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
