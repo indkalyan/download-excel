@@ -1,0 +1,26 @@
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import org.apache.commons.io.IOUtils;
+
+public class MultipartFileProcessor {
+
+    public void processFile(MultipartFile multipartFile) {
+        try {
+            InputStream inputStream = multipartFile.getInputStream();
+            // Read the content of the file (e.g., line by line)
+            IOUtils.readLines(inputStream, StandardCharsets.UTF_8)
+                    .forEach(this::handleLine);
+        } catch (IOException e) {
+            // Handle exceptions (e.g., file not found, I/O errors)
+            e.printStackTrace();
+        }
+    }
+
+    private void handleLine(String line) {
+        // Process each line of the file
+        System.out.println("Processing line: " + line);
+        // Your custom logic here...
+    }
+}
