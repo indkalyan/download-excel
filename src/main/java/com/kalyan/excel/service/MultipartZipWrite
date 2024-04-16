@@ -1,0 +1,42 @@
+import org.apache.commons.io.IOUtils;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+public class UnzipMultipartFileToDriveExample {
+
+    public void unzipAndSave(MultipartFile multipartFile, String destinationDirectory) throws IOException {
+        // Create a byte array to store the content of the multipart file
+        byte[] multipartBytes = multipartFile.getBytes();
+
+        // Create a ZipInputStream to read the content of the multipart file
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(multipartBytes);
+             ZipInputStream zis = new ZipInputStream(bis)) {
+            // Iterate over each entry in the zip file
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                // Extract the entry to the destination directory
+                File file = new File(destinationDirectory, entry.getName());
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    IOUtils.copy(zis, fos);
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        UnzipMultipartFileToDriveExample example = new UnzipMultipartFileToDriveExample();
+
+        // Example usage:
+        try {
+            // Replace "multipartFile" with your actual MultipartFile object
+            MultipartFile multipartFile = /* your MultipartFile */;
+            String destinationDirectory = "path/to/save/unzipped/files"; // Specify the desired directory
+            
+            example.unzipAndSave(multipartFile, destinationDirectory);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
