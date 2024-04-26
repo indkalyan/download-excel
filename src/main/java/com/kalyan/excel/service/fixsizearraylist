@@ -1,0 +1,42 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class FixedSizeList<E> {
+    private final List<E> list;
+    private final int maxSize;
+
+    public FixedSizeList(int maxSize) {
+        if (maxSize <= 0) {
+            throw new IllegalArgumentException("Max size must be greater than 0");
+        }
+        this.maxSize = maxSize;
+        this.list = new ArrayList<>(maxSize);
+    }
+
+    public boolean add(E e) {
+        if (list.size() >= maxSize) {
+            throw new IllegalStateException("Cannot add more elements, list has reached its maximum size");
+        }
+        return list.add(e);
+    }
+
+    public void add(int index, E element) {
+        if (list.size() >= maxSize) {
+            throw new IllegalStateException("Cannot add more elements, list has reached its maximum size");
+        }
+        list.add(index, element);
+    }
+
+    public E get(int index) {
+        return list.get(index);
+    }
+
+    public void set(int index, E element) {
+        list.set(index, element);
+    }
+
+    public int size() {
+        return list.size();
+    }
+}
