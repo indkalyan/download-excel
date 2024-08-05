@@ -1,0 +1,56 @@
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.*;
+
+public class WorkflowExecutor {
+    private final Workflow workflow;
+    private final Map<String, Future<?>> futures = new ConcurrentHashMap<>();
+
+    public WorkflowExecutor(Workflow workflow) {
+        this.workflow = workflow;
+    }
+
+    public void execute() {
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        for (Task task : workflow.tasks) {
+            futures.put(task.name, executor.submit(() -> {
+                try {
+                    for (String dependency : task.dependencies) {
+                        futures.get(dependency).get();
+                    }
+                    executeTask(task);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }));
+        }
+
+        executor.shutdown();
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void executeTask(Task task) {
+        System.out.println("Executing: " + task.command);
+        try {
+            Process process = Runtime.getRuntime().exec(task.command);
+            process.waitFor();
+            System.out.println("Completed: " + task.name);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            Workflow workflow = WorkflowParser.parseWorkflow("workflow.json");
+            new WorkflowExecutor(workflow).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
